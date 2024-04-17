@@ -15,6 +15,7 @@ import android.view.View
 
 
 class TobitView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
+    val TAG = "TEST GAME WITH ERROR"
     // КИСТИ ДЛЯ ТЕКСТА
     val paint = Paint()
     val paint1 = Paint()
@@ -62,7 +63,7 @@ class TobitView(context: Context?, attrs: AttributeSet?) : View(context, attrs) 
             MotionEvent.ACTION_DOWN -> {
                 fromCol = -1+((event.x - 10F.dp) / 57F.dp).toInt()
                 fromRow = -4+((event.y - 10F.dp) / 57F.dp).toInt()
-                Log.d("touch","$fromCol,$fromRow")
+                Log.d(TAG,"$fromCol,$fromRow")
                 tobitDelegate?.PieceAt(fromCol,fromRow)?.let {
                     movingPiece = it
                     movingPieceBitmap = bitmaps[it.resID]
