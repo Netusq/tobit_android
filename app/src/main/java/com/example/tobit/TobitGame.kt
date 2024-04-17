@@ -1,15 +1,12 @@
 package com.example.tobit
 
-import android.util.Log
 import kotlin.math.abs
 
 object TobitGame {
     private var Whiteturn = true
-    var Whitewinner = null
     var piecesBox = mutableSetOf<TobitPieces>()
     init {
         reset()
-
     }
     private fun clear(){
         piecesBox.removeAll(piecesBox)
@@ -28,17 +25,17 @@ object TobitGame {
     fun canEat(pieces: TobitPieces): Boolean {
         if (pieces.player == Player.WHITE){
             for (i in arrayOf(-1,1)){
-                if (!isSpace(pieces.col+i,pieces.row) && !isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+2*i,pieces.row))!!.player == Player.BLACK){
+                if (!isSpace(pieces.col+i,pieces.row) && isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+i,pieces.row))!!.player == Player.BLACK){
                     return true
-                }else if (!isSpace(pieces.col,pieces.row+i) && !isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+2*i))!!.player == Player.BLACK){
+                }else if (!isSpace(pieces.col,pieces.row+i) && isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+i))!!.player == Player.BLACK){
                     return true
                 }
             }
         }else{
             for (i in arrayOf(-1,1)){
-                if (!isSpace(pieces.col+i,pieces.row) && !isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+2*i,pieces.row))!!.player == Player.WHITE){
+                if (!isSpace(pieces.col+i,pieces.row) && isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+i,pieces.row))!!.player == Player.WHITE){
                     return true
-                }else if (!isSpace(pieces.col,pieces.row+i) && !isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+2*i))!!.player == Player.WHITE){
+                }else if (!isSpace(pieces.col,pieces.row+i) && isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+i))!!.player == Player.WHITE){
                     return true
                 }
             }
