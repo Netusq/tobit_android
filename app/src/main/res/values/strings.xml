@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Тобит</string>
+    <string name="players_two">2 игрока</string>
+    <string name="pc">Компьютер</string>
+</resources>
