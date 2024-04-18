@@ -40,12 +40,12 @@ object TobitGame {
         var isWhite = pieces.player == Player.WHITE
         for (i in arrayOf(-1,1)) {
             if ( !isSpace(col+i,row)){
-                if ( (pieces.rank == Tobitman.TOBIT || (pieces.rank== Tobitman.PAWN )) &&((pieceAt(col+i,row)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col+2*i,row))  ){
+                if ( ((pieceAt(col+i,row)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col+2*i,row))  ){
                     return true
                 }
             }
             if (!isSpace(col,row+i)){
-                if( (pieces.rank == Tobitman.TOBIT || (pieces.rank== Tobitman.PAWN && i == (if (isWhite) 1 else -1))) && ((pieceAt(col,row+i)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col,row+2*i))){
+                if( (pieces.rank == Tobitman.TOBIT || (pieces.rank== Tobitman.PAWN && i == (if (isWhite) -1 else 1))) && ((pieceAt(col,row+i)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col,row+2*i))){
                     return true
                 }
             }
@@ -54,26 +54,37 @@ object TobitGame {
     }
     fun checkCanEat(col:Int,row:Int,pieces: TobitPieces){
         pieces.Eat = canEat(pieces)
+        Log.d(TAG,"2 "+ pieces.Eat.toString())
         for (i in arrayOf(-1,1)){
             if (!isSpace(pieces.col + i,pieces.row)){
                 pieceAt(pieces.col + i,pieces.row)!!.Eat = canEat(pieceAt(pieces.col + i,pieces.row)!!)
+                Log.d(TAG,"3 $i "+ pieceAt(pieces.col + i,pieces.row)!!.Eat.toString())
             }
             if (!isSpace(pieces.col ,pieces.row+ i)){
                 pieceAt(pieces.col,pieces.row + i)!!.Eat = canEat(pieceAt(pieces.col ,pieces.row+ i)!!)
+                Log.d(TAG,"4 $i "+ pieceAt(pieces.col ,pieces.row+ i)!!.Eat.toString())
+
             }
             if (!isSpace(col + i,row)){
                 pieceAt(col + i,row)!!.Eat = canEat(pieceAt(col + i,row)!!)
+                Log.d(TAG,"5 $i "+ pieceAt(col + i,row)!!.Eat.toString())
+
             }
             if (!isSpace(col ,row+ i)){
                 pieceAt(col,row + i)!!.Eat = canEat(pieceAt(col ,row+ i)!!)
+                Log.d(TAG,"6 $i "+ pieceAt(col ,row+ i)!!.Eat.toString())
+
             }
         }
     }
+
     fun movePiece(fromCol:Int,fromRow:Int, toCol:Int,toRow:Int){
         if (fromCol == toCol && fromRow==toRow) return
         val movingPiece = pieceAt(fromCol,fromRow) ?: return
+        var canEat = eatAt(if(Whiteturn) Player.WHITE else Player.BLACK)
+        Log.d(TAG, "1 $canEat")
         if (canMove(fromCol,fromRow, toCol,toRow)) {
-            if (movingPiece.player == (if (Whiteturn) Player.WHITE else Player.BLACK)) {
+            if ((if(canEat) (movingPiece.Eat) else true)  && movingPiece.player == (if (Whiteturn) Player.WHITE else Player.BLACK)) {
                 if (abs(fromCol - toCol) == 1 || abs(fromRow - toRow) == 1) {
                     if ((abs(fromCol - toCol) == 1) || (movingPiece.rank == Tobitman.PAWN && fromRow - toRow == (if (Whiteturn) 1 else -1)) || (movingPiece.rank == Tobitman.TOBIT)) {
                         piecesBox.remove(movingPiece)
@@ -119,5 +130,13 @@ object TobitGame {
             }
         }
         return null
+    }
+    private fun eatAt(player: Player): Boolean {
+        for( piece1 in piecesBox){
+            if (piece1.Eat == true && piece1.player== player){
+                return true
+            }
+        }
+        return false
     }
 }
