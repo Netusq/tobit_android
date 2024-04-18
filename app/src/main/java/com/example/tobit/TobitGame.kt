@@ -25,7 +25,7 @@ object TobitGame {
         return !(abs(fromCol-ToCol) >0  && abs(fromRow-ToRow) > 0)  && isSpace(ToCol,ToRow) && !(fromCol == -1 && ToCol == -1) && !(fromCol == 5 && ToCol == 5) && !(fromRow == 0 && ToRow == 0) && !(fromRow == 5 && ToRow == 5) && (ToRow in 0..5) && (ToCol in -1..5)
     }
     fun transform(pieces: TobitPieces){
-        val Piece = pieceAt(pieces.col,pieces.row) ?: return
+        val Piece = pieceAt(pieces.col,pieces.row)!!
         if (pieces.rank == Tobitman.PAWN && pieces.player == Player.BLACK && pieces.row == 5){
             addPiece(TobitPieces(pieces.col,5,Player.BLACK,Tobitman.TOBIT, R.drawable.b_d,false))
             piecesBox.remove(Piece)
@@ -39,17 +39,20 @@ object TobitGame {
         var row = pieces.row
         var isWhite = pieces.player == Player.WHITE
         for (i in arrayOf(-1,1)) {
-            if (pieces.player == Player.WHITE) {
-                if (!isSpace(col+i,row)){
-                    if (((pieceAt(col+i,row)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col+2*i,row)) || ((pieceAt(col,row+i)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col,row+2*i)) ){
-                        return true
-                    }
+            if ( !isSpace(col+i,row)){
+                if ( (pieces.rank == Tobitman.TOBIT || (pieces.rank== Tobitman.PAWN )) &&((pieceAt(col+i,row)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col+2*i,row))  ){
+                    return true
+                }
+            }
+            if (!isSpace(col,row+i)){
+                if( (pieces.rank == Tobitman.TOBIT || (pieces.rank== Tobitman.PAWN && i == (if (isWhite) 1 else -1))) && ((pieceAt(col,row+i)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col,row+2*i))){
+                    return true
                 }
             }
         }
         return false
     }
-    fun checkCanEat(pieces: TobitPieces){
+    fun checkCanEat(col:Int,row:Int,pieces: TobitPieces){
         pieces.Eat = canEat(pieces)
         for (i in arrayOf(-1,1)){
             if (!isSpace(pieces.col + i,pieces.row)){
@@ -57,6 +60,12 @@ object TobitGame {
             }
             if (!isSpace(pieces.col ,pieces.row+ i)){
                 pieceAt(pieces.col,pieces.row + i)!!.Eat = canEat(pieceAt(pieces.col ,pieces.row+ i)!!)
+            }
+            if (!isSpace(col + i,row)){
+                pieceAt(col + i,row)!!.Eat = canEat(pieceAt(col + i,row)!!)
+            }
+            if (!isSpace(col ,row+ i)){
+                pieceAt(col,row + i)!!.Eat = canEat(pieceAt(col ,row+ i)!!)
             }
         }
     }
@@ -68,19 +77,25 @@ object TobitGame {
                 if (abs(fromCol - toCol) == 1 || abs(fromRow - toRow) == 1) {
                     if ((abs(fromCol - toCol) == 1) || (movingPiece.rank == Tobitman.PAWN && fromRow - toRow == (if (Whiteturn) 1 else -1)) || (movingPiece.rank == Tobitman.TOBIT)) {
                         piecesBox.remove(movingPiece)
+                        movingPiece.Eat = false
                         addPiece(movingPiece.copy(col = toCol, row = toRow))
                     }
-                } else if (abs(fromRow - toRow) == 2 && !isSpace((fromCol + toCol) / 2, fromRow) && (pieceAt((fromCol + toCol) / 2, fromRow)!!).player == (if (Whiteturn) Player.BLACK else Player.WHITE) ) {
+                } else if (abs(fromCol - toCol) == 2 && !isSpace((fromCol + toCol) / 2, fromRow) && (pieceAt((fromCol + toCol) / 2, fromRow)!!).player == (if (Whiteturn) Player.BLACK else Player.WHITE) ) {
+                    pieceAt((fromCol + toCol) / 2, fromRow)!!.Eat =false
                     piecesBox.remove(pieceAt((fromCol + toCol) / 2, fromRow))
+                    movingPiece.Eat = false
                     piecesBox.remove(movingPiece)
                     addPiece(movingPiece.copy(col = toCol, row = toRow))
                 } else if (abs(fromRow - toRow) == 2 && !isSpace(fromCol, (fromRow + toRow) / 2) && (pieceAt(fromCol, (fromRow + toRow) / 2)!!).player == (if (Whiteturn) Player.BLACK else Player.WHITE)) {
+                    pieceAt(fromCol, (fromRow + toRow) / 2)!!.Eat =false
                     piecesBox.remove(pieceAt(fromCol, (fromRow + toRow) / 2))
+                    movingPiece.Eat = false
                     piecesBox.remove(movingPiece)
                     addPiece(movingPiece.copy(col = toCol, row = toRow))
                 }
                 if (!isSpace(toCol, toRow)) {
                     Whiteturn = !Whiteturn
+                    checkCanEat(fromCol,fromCol,pieceAt(toCol, toRow)!!)
                     transform(pieceAt(toCol, toRow)!!)
                 }
             }
