@@ -24,26 +24,6 @@ object TobitGame {
     fun canMove(fromCol:Int,fromRow:Int,ToCol:Int,ToRow:Int): Boolean {
         return !(abs(fromCol-ToCol) >0  && abs(fromRow-ToRow) > 0)  && isSpace(ToCol,ToRow) && !(fromCol == -1 && ToCol == -1) && !(fromCol == 5 && ToCol == 5) && !(fromRow == 0 && ToRow == 0) && !(fromRow == 5 && ToRow == 5) && (ToRow in 0..5) && (ToCol in -1..5)
     }
-    fun canEat(pieces: TobitPieces): Boolean {
-        if (pieces.player == Player.WHITE){
-            for (i in arrayOf(-1,1)){
-                if (!isSpace(pieces.col+i,pieces.row) && isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+i,pieces.row))!!.player == Player.BLACK){
-                    return true
-                }else if (!isSpace(pieces.col,pieces.row+i) && isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+i))!!.player == Player.BLACK){
-                    return true
-                }
-            }
-        }else{
-            for (i in arrayOf(-1,1)){
-                if (!isSpace(pieces.col+i,pieces.row) && isSpace(pieces.col+2*i,pieces.row) && (pieceAt(pieces.col+i,pieces.row))!!.player == Player.WHITE){
-                    return true
-                }else if (!isSpace(pieces.col,pieces.row+i) && isSpace(pieces.col,pieces.row+2*i) && (pieceAt(pieces.col,pieces.row+i))!!.player == Player.WHITE){
-                    return true
-                }
-            }
-        }
-        return false
-    }
     fun transform(pieces: TobitPieces){
         val Piece = pieceAt(pieces.col,pieces.row) ?: return
         if (pieces.rank == Tobitman.PAWN && pieces.player == Player.BLACK && pieces.row == 5){
@@ -54,98 +34,55 @@ object TobitGame {
             piecesBox.remove(Piece)
         }
     }
-    fun checkCanEat(pieces: TobitPieces){
-        if (canEat(pieces)){
-            pieces.Eat = true
-            Log.d(TAG, "(${pieces.col},${pieces.row}) (${pieces.Eat})")
-        }
-        for (i in arrayOf(-1,1)){
-            if (!isSpace(pieces.col + i,pieces.row)){
-                if(canEat(pieceAt(pieces.col + i,pieces.row)!!)){
-                    pieceAt(pieces.col + i,pieces.row)!!.Eat = true
-                    Log.d(TAG, "(${pieces.col + i},${pieces.row}) (${pieces.Eat})")
+    private fun canEat(pieces: TobitPieces): Boolean {
+        var col = pieces.col
+        var row = pieces.row
+        var isWhite = pieces.player == Player.WHITE
+        for (i in arrayOf(-1,1)) {
+            if (pieces.player == Player.WHITE) {
+                if (!isSpace(col+i,row)){
+                    if (((pieceAt(col+i,row)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col+2*i,row)) || ((pieceAt(col,row+i)!!).player == (if (isWhite) Player.BLACK else Player.WHITE) && isSpace(col,row+2*i)) ){
+                        return true
+                    }
                 }
             }
+        }
+        return false
+    }
+    fun checkCanEat(pieces: TobitPieces){
+        pieces.Eat = canEat(pieces)
+        for (i in arrayOf(-1,1)){
+            if (!isSpace(pieces.col + i,pieces.row)){
+                pieceAt(pieces.col + i,pieces.row)!!.Eat = canEat(pieceAt(pieces.col + i,pieces.row)!!)
+            }
             if (!isSpace(pieces.col ,pieces.row+ i)){
-                if(canEat(pieceAt(pieces.col ,pieces.row+ i)!!)){
-                    pieceAt(pieces.col,pieces.row + i)!!.Eat = true
-                    Log.d(TAG, "(${pieces.col },${pieces.row+ i}) (${pieces.Eat})")
-                }
+                pieceAt(pieces.col,pieces.row + i)!!.Eat = canEat(pieceAt(pieces.col ,pieces.row+ i)!!)
             }
         }
     }
     fun movePiece(fromCol:Int,fromRow:Int, toCol:Int,toRow:Int){
         if (fromCol == toCol && fromRow==toRow) return
         val movingPiece = pieceAt(fromCol,fromRow) ?: return
-        if (canMove(fromCol,fromRow, toCol,toRow)){
-            if(Whiteturn) {
-                //ЗА БЕЛЫХ
-                if (movingPiece.player == Player.WHITE) {
-                   if(abs(fromCol-toCol) == 1 || abs(fromRow-toRow) == 1){
-                       if (movingPiece.rank == Tobitman.TOBIT || abs(fromCol-toCol) == 1){
-                           piecesBox.remove(movingPiece)
-                           addPiece(movingPiece.copy(col = toCol, row = toRow))
-                           checkCanEat(pieceAt(toCol,toRow)!!)
-                           Whiteturn=!Whiteturn
-                       }else if(movingPiece.rank == Tobitman.PAWN && fromRow-toRow == 1){
-                           piecesBox.remove(movingPiece)
-                           addPiece(movingPiece.copy(col = toCol, row = toRow))
-                           checkCanEat(pieceAt(toCol,toRow)!!)
-                           Whiteturn=!Whiteturn
-                       }
-
-                   }else if(abs(fromCol-toCol) == 2 && !isSpace((fromCol+toCol)/2,fromRow)&& (pieceAt((fromCol+toCol)/2,fromRow))!!.player == Player.BLACK){
-                       piecesBox.remove(pieceAt((fromCol+toCol)/2,fromRow))
-                       piecesBox.remove(movingPiece)
-                       addPiece(movingPiece.copy(col = toCol, row = toRow))
-                       checkCanEat(pieceAt(toCol,toRow)!!)
-                       Whiteturn=!Whiteturn
-                   }else if(abs(fromRow-toRow) == 2 && !isSpace(fromCol,(fromRow+toRow)/2)&& (pieceAt(fromCol,(fromRow+toRow)/2))!!.player == Player.BLACK){
-                       piecesBox.remove(pieceAt(fromCol,(fromRow+toRow)/2))
-                       piecesBox.remove(movingPiece)
-                       addPiece(movingPiece.copy(col = toCol, row = toRow))
-                       checkCanEat(pieceAt(toCol,toRow)!!)
-                       Whiteturn=!Whiteturn
-                   }
-                    if (!isSpace(toCol,toRow)){
-                        transform(pieceAt(toCol,toRow)?: return )
-                    }
-               }
-
-            }else{
-                //ЗА ЧЕРНЫХ
-                if (movingPiece.player == Player.BLACK) {
-
-                    if(abs(fromCol-toCol) == 1 || abs(fromRow-toRow) == 1){
-                        if (movingPiece.rank == Tobitman.TOBIT || abs(fromCol-toCol) == 1){
-                            piecesBox.remove(movingPiece)
-                            addPiece(movingPiece.copy(col = toCol, row = toRow))
-                            Whiteturn=!Whiteturn
-                            checkCanEat(pieceAt(toCol,toRow)!!)
-                        }else if(movingPiece.rank == Tobitman.PAWN && fromRow-toRow == -1){
-                            piecesBox.remove(movingPiece)
-                            addPiece(movingPiece.copy(col = toCol, row = toRow))
-                            Whiteturn=!Whiteturn
-                            checkCanEat(pieceAt(toCol,toRow)!!)
-                        }
-                    }else if(abs(fromCol-toCol) == 2 && !isSpace((fromCol+toCol)/2,fromRow)&& (pieceAt((fromCol+toCol)/2,fromRow))!!.player == Player.WHITE){
-                        piecesBox.remove(pieceAt((fromCol+toCol)/2,fromRow))
+        if (canMove(fromCol,fromRow, toCol,toRow)) {
+            if (movingPiece.player == (if (Whiteturn) Player.WHITE else Player.BLACK)) {
+                if (abs(fromCol - toCol) == 1 || abs(fromRow - toRow) == 1) {
+                    if ((abs(fromCol - toCol) == 1) || (movingPiece.rank == Tobitman.PAWN && fromRow - toRow == (if (Whiteturn) 1 else -1)) || (movingPiece.rank == Tobitman.TOBIT)) {
                         piecesBox.remove(movingPiece)
                         addPiece(movingPiece.copy(col = toCol, row = toRow))
-                        Whiteturn=!Whiteturn
-                        checkCanEat(pieceAt(toCol,toRow)!!)
-                    }else if(abs(fromRow-toRow) == 2 && !isSpace(fromCol,(fromRow+toRow)/2)&& (pieceAt(fromCol,(fromRow+toRow)/2))!!.player == Player.WHITE){
-                        piecesBox.remove(pieceAt(fromCol,(fromRow+toRow)/2))
-                        piecesBox.remove(movingPiece)
-                        addPiece(movingPiece.copy(col = toCol, row = toRow))
-                        Whiteturn=!Whiteturn
-                        checkCanEat(pieceAt(toCol,toRow)!!)
                     }
-                    if (!isSpace(toCol,toRow)){
-                        transform(pieceAt(toCol,toRow)?: return )
-                    }
+                } else if (abs(fromRow - toRow) == 2 && !isSpace((fromCol + toCol) / 2, fromRow) && (pieceAt((fromCol + toCol) / 2, fromRow)!!).player == (if (Whiteturn) Player.BLACK else Player.WHITE) ) {
+                    piecesBox.remove(pieceAt((fromCol + toCol) / 2, fromRow))
+                    piecesBox.remove(movingPiece)
+                    addPiece(movingPiece.copy(col = toCol, row = toRow))
+                } else if (abs(fromRow - toRow) == 2 && !isSpace(fromCol, (fromRow + toRow) / 2) && (pieceAt(fromCol, (fromRow + toRow) / 2)!!).player == (if (Whiteturn) Player.BLACK else Player.WHITE)) {
+                    piecesBox.remove(pieceAt(fromCol, (fromRow + toRow) / 2))
+                    piecesBox.remove(movingPiece)
+                    addPiece(movingPiece.copy(col = toCol, row = toRow))
                 }
-
+                if (!isSpace(toCol, toRow)) {
+                    Whiteturn = !Whiteturn
+                    transform(pieceAt(toCol, toRow)!!)
+                }
             }
         }
     }
