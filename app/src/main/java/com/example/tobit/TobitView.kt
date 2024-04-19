@@ -12,6 +12,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import com.example.tobit.TobitGame.coorToInt
 
 
 class TobitView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
@@ -63,7 +64,7 @@ class TobitView(context: Context?, attrs: AttributeSet?) : View(context, attrs) 
             MotionEvent.ACTION_DOWN -> {
                 fromCol = -1+((event.x - 10F.dp) / 57F.dp).toInt()
                 fromRow = -4+((event.y - 10F.dp) / 57F.dp).toInt()
-                Log.d(TAG,"$fromCol,$fromRow")
+                Log.d(TAG,"$fromCol,$fromRow,${coorToInt(fromCol,fromRow)}")
                 tobitDelegate?.PieceAt(fromCol,fromRow)?.let {
                     movingPiece = it
                     movingPieceBitmap = bitmaps[it.resID]

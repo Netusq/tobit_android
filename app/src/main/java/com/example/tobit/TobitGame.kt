@@ -5,8 +5,11 @@ import kotlin.math.abs
 
 object TobitGame {
     private var Whiteturn = true
+    private var WhiteWin = false
+    private var BlackWin = false
     val TAG = "TEST GAME WITH ERROR"
     var piecesBox = mutableSetOf<TobitPieces>()
+    val history = mutableListOf("start")
     init {
         reset()
     }
@@ -37,9 +40,6 @@ object TobitGame {
             piecesBox.remove(Piece)
         }
     }
-    fun canMoveEat(fromCol:Int,fromRow:Int,ToCol:Int,ToRow:Int): Boolean {
-        return !(abs(fromCol-ToCol) >0  && abs(fromRow-ToRow) > 0)  && isSpace(ToCol,ToRow) &&  (ToRow in 0..5) && (ToCol in -1..5) && isSpace(ToCol,ToRow)
-    }
     private fun canEat(pieces: TobitPieces): Boolean {
         val col = pieces.col
         val row = pieces.row
@@ -59,22 +59,6 @@ object TobitGame {
         return false
     }
     fun checkCanEat(col:Int,row:Int,pieces: TobitPieces){
-//        pieces.Eat = canEat(pieces)
-//        for (i in arrayOf(-1,1)){
-//            if (!isSpace(pieces.col + i,pieces.row)){
-//                pieceAt(pieces.col + i,pieces.row)!!.Eat = canEat(pieceAt(pieces.col + i,pieces.row)!!)
-//            }
-//            if (!isSpace(pieces.col ,pieces.row+ i)){
-//                pieceAt(pieces.col,pieces.row + i)!!.Eat = canEat(pieceAt(pieces.col ,pieces.row+ i)!!)
-//                Log.d(TAG,pieces.col.toString()+(pieces.row + i).toString()+ pieceAt(pieces.col,pieces.row + i)!!.Eat)
-//            }
-//            if (!isSpace(col + i,row)){
-//                pieceAt(col + i,row)!!.Eat = canEat(pieceAt(col + i,row)!!)
-//            }
-//            if (!isSpace(col ,row+ i)){
-//                pieceAt(col,row + i)!!.Eat = canEat(pieceAt(col ,row+ i)!!)
-//            }
-//        }
         for (i in piecesBox){
             i.Eat = canEat(i)
             if (i.Eat){
@@ -83,12 +67,25 @@ object TobitGame {
             }
         }
     }
-
+    fun coorToInt(Col: Int,Row: Int): Int {
+        when (Row) {
+            5 -> return Col + 1
+            4 -> return Col + 7
+            3 -> return Col + 2 * 6 + 2
+            2 -> return Col + 3 * 6 + 3
+            1 -> return Col + (6 * 4) + 4
+            0 -> return Col + 34
+        }
+        return -1
+    }
+    fun addhistory(fromCol: Int,fromRow: Int,toCol: Int,toRow: Int){
+        history.add("${coorToInt(fromCol,fromRow)}:${coorToInt(toCol,toRow)}")
+    }
     fun movePiece(fromCol:Int,fromRow:Int, toCol:Int,toRow:Int){
         if (fromCol == toCol && fromRow==toRow) return
         val movingPiece = pieceAt(fromCol,fromRow) ?: return
         val canEat = eatAt(if(Whiteturn) Player.WHITE else Player.BLACK)
-        if (canMove(fromCol,fromRow, toCol,toRow)) {
+        if (!BlackWin && !WhiteWin &&canMove(fromCol,fromRow, toCol,toRow)) {
             if ((if(canEat) (movingPiece.Eat) else true)  && movingPiece.player == (if (Whiteturn) Player.WHITE else Player.BLACK)) {
                 if (!canEat && abs(fromCol - toCol) == 1 || abs(fromRow - toRow) == 1) {
                     if ((abs(fromCol - toCol) == 1) || (movingPiece.rank == Tobitman.PAWN && fromRow - toRow == (if (Whiteturn) 1 else -1)) || (movingPiece.rank == Tobitman.TOBIT)) {
@@ -119,10 +116,19 @@ object TobitGame {
                     }
                 }
                 if (!isSpace(toCol, toRow)) {
+                    addhistory(fromCol,fromRow,toCol,toRow)
+                    Log.d(TAG, history.last())
+                    checkEndGame()
                     checkCanEat(fromCol,fromCol,pieceAt(toCol, toRow)!!)
                     transform(pieceAt(toCol, toRow)!!)
                 }
             }
+        }else if(WhiteWin && !BlackWin){
+            TODO("white win")
+        }else if(BlackWin && !WhiteWin){
+            TODO("black win")
+        }else if(BlackWin && WhiteWin){
+            TODO("equals")
         }
     }
     fun reset(){
@@ -151,5 +157,41 @@ object TobitGame {
             }
         }
         return false
+    }
+    fun canAnyMove(pieces: TobitPieces): Boolean {
+        var col = pieces.col
+        var row = pieces.row
+        for (i in arrayOf(-1,1)){
+            if (canMove(col,row,col+i,row))  {
+                return true
+            }
+            if (canMove(col,row,col,row+i)){
+                return true
+            }
+            if (canEat(pieces)){
+                return true
+            }
+        }
+        return false
+    }
+    private fun checkWin(){
+        var black = 0
+        var white = 0
+        for(i in piecesBox){
+            if(i.player == Player.BLACK){
+                if(canAnyMove(i)){
+                    black++
+                }
+            }else{
+                if(canAnyMove(i)){
+                    white++
+                }
+            }
+        }
+        WhiteWin = (black == 0)
+        BlackWin = (white == 0)
+    }
+    fun checkEndGame(){
+        checkWin()
     }
 }
